@@ -2,6 +2,9 @@
   "name": "spindle-speed-controller",
   "private": true,
   "version": "0.0.0",
+  "repository": "https://github.com/TNCT-Mechatech/spindle-speed-controller",
+  "license": "Apache-2.0",
+  "author": "Tetsuya Yamamoto <testusuke@gmail.com>",
   "type": "module",
   "scripts": {
     "dev": "vite",
