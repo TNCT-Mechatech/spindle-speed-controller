@@ -8,6 +8,14 @@ use std::fs::File;
 use std::io::prelude::*;
 
 
+/// TODO implement following methods
+/// Note: Need to define a protocol for serial communication before implementing following methods
+/// - [ ] get_spindle_state
+/// - [ ] set_spindle_state
+/// - [ ] start_spindle
+/// - [ ] stop_spindle
+/// - [ ] emergency_stop
+
 /// Serial communication section
 
 //  serial path
@@ -191,11 +199,13 @@ fn get_spindle_state() -> Result<SpindleState, String> {
 }
 
 /**
- *  Set spindle state
+ *  Set spindle target
  *  Sets the spindle state
  */
 #[tauri::command]
-fn set_spindle_state(state: SpindleState) -> Result<(), String> {
+fn set_spindle_target(direction: bool, speed: u32) -> Result<(), String> {
+    println!("set spindle target. direction: {}, speed: {}", direction, speed);
+
     Ok(())
 }
 
@@ -257,7 +267,7 @@ fn main() {
             get_max_spindle_speed,
             set_max_spindle_speed,
             get_spindle_state,
-            set_spindle_state,
+            set_spindle_target,
             start_spindle,
             stop_spindle,
             emergency_stop
