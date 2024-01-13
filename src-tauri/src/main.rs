@@ -194,6 +194,7 @@ fn set_spindle_state(state: SpindleState) -> Result<(), String> {
  */
 #[tauri::command]
 fn start_spindle() -> Result<(), String> {
+    println!("start spindle");
     Ok(())
 }
 
@@ -203,6 +204,7 @@ fn start_spindle() -> Result<(), String> {
  */
 #[tauri::command]
 fn stop_spindle() -> Result<(), String> {
+    println!("stop spindle");
     Ok(())
 }
 
@@ -212,6 +214,7 @@ fn stop_spindle() -> Result<(), String> {
  */
 #[tauri::command]
 fn emergency_stop() -> Result<(), String> {
+    println!("emergency stop");
     Ok(())
 }
 
