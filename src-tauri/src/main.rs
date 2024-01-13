@@ -13,6 +13,88 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+/// Serial communication section
+
+//  serial path
+static SERIAL_PATH: OnceCell<String> = OnceCell::new();
+
+/**
+ *  Get available serial ports
+ *  Returns a vector of available serial ports
+ */
+#[tauri::command]
+fn get_available_ports() -> Result<Vec<String>, String> {
+    let ports = serialport::available_ports();
+    //  error handling
+    if ports.is_err() {
+        return Err("Unable to get available serial ports.".to_string());
+    }
+
+    let mut port_path: Vec<String> = Vec::new();
+
+    for port in ports.unwrap() {
+        let usb_info = match port.port_type {
+            serialport::SerialPortType::UsbPort(usb_info) => Some(usb_info),
+            _ => None,
+        };
+
+        if let Some(info) = usb_info {
+            //  STMicroelectronics Vendor ID is 0x0483
+            //  Check if port is produced by STMicroelectronics
+            //  https://devicehunt.com/view/type/usb/vendor/0483#search-results-table
+            if info.vid == 0x0483 {
+                port_path.push(port.port_name);
+            }
+        }
+    }
+
+    Ok(port_path)
+}
+
+/**
+ *  Get selected serial port
+ *  Returns the selected serial port
+ */
+#[tauri::command]
+fn get_selected_port() -> Result<String, ()> {
+    match SERIAL_PATH.get() {
+        Some(path) => Ok(path.to_string()),
+        None => Err(()),
+    }
+}
+
+/**
+ *  Set serial port
+ *  Sets the selected serial port
+ */
+#[tauri::command]
+fn set_port(path: String) -> Result<(), String> {
+    let ports = serialport::available_ports();
+    //  error handling
+    if ports.is_err() {
+        return Err("Unable to get available serial ports.".to_string());
+    }
+
+    //  check if specified port is available
+    let mut port_available = false;
+    for port in ports.unwrap() {
+        if port.port_name == path {
+            port_available = true;
+            break;
+        }
+    }
+
+    //  error handling
+    if !port_available {
+        return Err("Specified port is not available.".to_string());
+    }
+
+    //  set serial path
+    SERIAL_PATH.set(path).unwrap();
+
+    Ok(())
+}
+
 /// Configuration section
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
