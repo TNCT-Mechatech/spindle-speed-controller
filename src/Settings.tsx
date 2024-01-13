@@ -1,5 +1,5 @@
 import {Stack} from "@mui/material";
-import MaxSpeedSettings from "./assets/MaxSpeedSettings.tsx";
+import MaxSpeedSettings from "./MaxSpeedSettings.tsx";
 
 export default function Settings() {
     return (
