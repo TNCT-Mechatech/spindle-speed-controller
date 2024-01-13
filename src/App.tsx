@@ -1,12 +1,27 @@
-import "./App.css";
+import CssBaseline from '@mui/material/CssBaseline';
+import {Box, createTheme, ThemeProvider, Typography} from "@mui/material";
 
-function App() {
+export default function App() {
+    const theme = createTheme({
+        palette: {
+            mode: 'light'
+        },
+        typography: {
+            fontFamily: [
+                'Roboto',
+                '"Noto Sans JP"',
+                '"Helvetica"',
+                'Arial',
+                'sans-serif',
+            ].join(','),
+        }
+    })
 
-  return (
-    <div className="container">
-      <h1>Welcome to Spindle Speed Controller!</h1>
-    </div>
-  );
+    return (
+        <ThemeProvider theme={theme}>
+            <Box sx={{display: 'flex'}}>
+                <CssBaseline/>
+            </Box>
+        </ThemeProvider>
+    );
 }
-
-export default App;
