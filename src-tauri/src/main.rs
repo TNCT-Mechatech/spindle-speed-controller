@@ -7,11 +7,6 @@ use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
 
 /// Serial communication section
 
@@ -96,7 +91,6 @@ fn set_port(path: String) -> Result<(), String> {
 }
 
 /// Configuration section
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(non_snake_case)]
 struct Configuration {
@@ -161,6 +155,66 @@ fn set_max_spindle_speed(app: tauri::AppHandle, speed: u32) -> Result<(), String
     }
 }
 
+/// Spindle State
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(non_snake_case)]
+struct SpindleState {
+    running: bool,
+    speed: u32,
+    direction: bool,
+    power: u32
+}
+
+/**
+ *  Get spindle state
+ *  Returns the spindle state
+ */
+#[tauri::command]
+fn get_spindle_state() -> Result<SpindleState, String> {
+    Ok(SpindleState {
+        running: false,
+        speed: 123,
+        direction: false,
+        power: 70
+    })
+}
+
+/**
+ *  Set spindle state
+ *  Sets the spindle state
+ */
+#[tauri::command]
+fn set_spindle_state(state: SpindleState) -> Result<(), String> {
+    Ok(())
+}
+
+/**
+ *  Start spindle
+ *  Starts the spindle
+ */
+#[tauri::command]
+fn start_spindle() -> Result<(), String> {
+    Ok(())
+}
+
+/**
+ *  Stop spindle
+ *  Stops the spindle
+ */
+#[tauri::command]
+fn stop_spindle() -> Result<(), String> {
+    Ok(())
+}
+
+/**
+ *  Emergency stop
+ *  Stops the spindle immediately
+ */
+#[tauri::command]
+fn emergency_stop() -> Result<(), String> {
+    Ok(())
+}
+
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
@@ -182,7 +236,18 @@ fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![
+            get_available_ports,
+            get_selected_port,
+            set_port,
+            get_max_spindle_speed,
+            set_max_spindle_speed,
+            get_spindle_state,
+            set_spindle_state,
+            start_spindle,
+            stop_spindle,
+            emergency_stop
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
