@@ -158,11 +158,21 @@ fn set_max_spindle_speed(app: tauri::AppHandle, speed: u32) -> Result<(), String
 /// Spindle State
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(non_snake_case)]
+enum MachineState {
+    Stopped,
+    Running,
+    EmergencyStop,
+    Error,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[allow(non_snake_case)]
 struct SpindleState {
-    running: bool,
-    speed: u32,
-    direction: bool,
-    power: u32
+    State: MachineState,
+    Direction: bool,
+    TargetSpeed: u32,
+    Speed: u32,
+    Power: u32
 }
 
 /**
@@ -172,10 +182,11 @@ struct SpindleState {
 #[tauri::command]
 fn get_spindle_state() -> Result<SpindleState, String> {
     Ok(SpindleState {
-        running: false,
-        speed: 123,
-        direction: false,
-        power: 70
+        State: MachineState::Stopped,
+        Direction: false,
+        TargetSpeed: 123,
+        Speed: 123,
+        Power: 70
     })
 }
 
