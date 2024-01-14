@@ -9,7 +9,7 @@ export default function Dashboard() {
                 <Grid item width={"50%"}>
                 </Grid>
                 <Grid item width={"50%"}>
-                    <Stack spacing={2}>
+                    <Stack spacing={1}>
                         <TargetSetting/>
                         <Divider/>
                         <Operation/>

@@ -1,5 +1,6 @@
-import {Button, Container, Stack} from "@mui/material";
+import {Button, Container, Grid, Stack} from "@mui/material";
 import {invoke} from "@tauri-apps/api/tauri";
+import EmergencyStop from "./EmergencyStop.tsx";
 
 export default function Operation() {
 
@@ -15,38 +16,38 @@ export default function Operation() {
         })
     }
 
-    const onEmergencyStopHandle = () => {
-        invoke("emergency_stop").then((res) => {
-            console.log(res)
-        })
-    }
-
     return (
         <Container>
-            <Stack spacing={4}>
-                <Button
-                    variant={"contained"}
-                    color={"success"}
-                    onClick={onStartHandle}
+            <Stack spacing={1}>
+                <Grid
+                    container
+                    direction={"row"}
+                    justifyContent={"space-around"}
+                    alignItems={"center"}
                 >
-                    Start
-                </Button>
+                    <Grid item xs={4}>
+                        <Button
+                            variant={"contained"}
+                            color={"success"}
+                            onClick={onStartHandle}
+                            fullWidth
+                        >
+                            Start
+                        </Button>
+                    </Grid>
+                    <Grid item xs={4}>
+                        <Button
+                            variant={"contained"}
+                            color={"error"}
+                            onClick={onStopHandle}
+                            fullWidth
+                        >
+                            Stop
+                        </Button>
+                    </Grid>
+                </Grid>
 
-                <Button
-                    variant={"contained"}
-                    color={"error"}
-                    onClick={onStopHandle}
-                >
-                    Stop
-                </Button>
-
-                <Button
-                    variant={"contained"}
-                    color={"warning"}
-                    onClick={onEmergencyStopHandle}
-                >
-                    Emergency Stop
-                </Button>
+                <EmergencyStop/>
             </Stack>
         </Container>
     )
