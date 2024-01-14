@@ -191,7 +191,7 @@ struct SpindleState {
 #[tauri::command]
 fn get_spindle_state() -> Result<SpindleState, String> {
     Ok(SpindleState {
-        State: MachineState::Stopped,
+        State: MachineState::Running,
         Direction: false,
         TargetSpeed: 123,
         Speed: 123,
