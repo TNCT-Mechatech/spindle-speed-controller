@@ -22,10 +22,10 @@ export default function Operation() {
                 <Grid
                     container
                     direction={"row"}
-                    justifyContent={"space-around"}
+                    justifyContent={"space-between"}
                     alignItems={"center"}
                 >
-                    <Grid item xs={4}>
+                    <Grid item xs={5.5}>
                         <Button
                             variant={"contained"}
                             color={"success"}
@@ -35,7 +35,7 @@ export default function Operation() {
                             Start
                         </Button>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={5.5}>
                         <Button
                             variant={"contained"}
                             color={"error"}
