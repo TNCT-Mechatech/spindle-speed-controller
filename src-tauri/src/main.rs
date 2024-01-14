@@ -6,20 +6,15 @@ use serde::{Serialize, Deserialize};
 use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
-
-
-/// TODO implement following methods
-/// Note: Need to define a protocol for serial communication before implementing following methods
-/// - [ ] get_spindle_state
-/// - [ ] set_spindle_state
-/// - [ ] start_spindle
-/// - [ ] stop_spindle
-/// - [ ] emergency_stop
+use std::time::Duration;
 
 /// Serial communication section
 
 //  serial path
 static SERIAL_PATH: OnceCell<String> = OnceCell::new();
+
+//  serial lock
+static IS_SERIAL_LOCKED: OnceCell<bool> = OnceCell::new();
 
 /**
  *  Get available serial ports
@@ -171,7 +166,7 @@ enum MachineState {
     Running,
     EmergencyStop,
     Error,
-    Offline
+    Offline,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -181,7 +176,7 @@ struct SpindleState {
     Direction: bool,
     TargetSpeed: u32,
     Speed: u32,
-    Power: u32
+    Power: u32,
 }
 
 /**
@@ -190,12 +185,87 @@ struct SpindleState {
  */
 #[tauri::command]
 fn get_spindle_state() -> Result<SpindleState, String> {
+    wait_until_serial_unlocked();
+    //  serial communication
+    lock_serial();
+    //  open serial port
+    let mut port = match serialport::new(SERIAL_PATH.get().unwrap(), 9_600)
+        .timeout(Duration::from_millis(100))    //  longer timeout for spindle state
+        .open()
+    {
+        Ok(port) => port,
+        Err(_) => return Err("Unable to open serial port.".to_string()),
+    };
+
+    //  send command
+    let command = ";STATUS\n".to_string();
+    match port.write(command.as_bytes()) {
+        Ok(_) => (),
+        Err(_) => return Err("Unable to write to serial port.".to_string()),
+    }
+
+    //  receive response
+    let mut buffer: Vec<u8> = vec![0; 100];
+    match port.read(&mut buffer) {
+        Ok(_) => (),
+        Err(_) => return Err("Unable to read from serial port.".to_string()),
+    }
+
+    //  parse into spindle state
+    let response = String::from_utf8(buffer).unwrap();
+    //  remove `;` and `\n`
+    let response = response.trim_start_matches(';');
+    let response = response.trim_end_matches('\n');
+    //  split response by space into vector
+    let response = response.split(" ");
+    let response: Vec<&str> = response.collect();
+
+    //  state
+    let state = match response[0] {
+        "STOP" => MachineState::Stopped,
+        "RUN" => MachineState::Running,
+        "EMERG" => MachineState::EmergencyStop,
+        "ERROR" => MachineState::Error,
+        _ => return Err("Unable to parse spindle state.".to_string()),
+    };
+
+    //  direction
+    let direction = match response[1] {
+        "F" => false,
+        "R" => true,
+        _ => return Err("Unable to parse spindle direction.".to_string()),
+    };
+
+    //  target speed
+    let target_speed = match response[2].parse::<u32>() {
+        Ok(speed) => speed,
+        Err(_) => return Err("Unable to parse spindle target speed.".to_string()),
+    };
+
+    //  speed
+    let speed = match response[3].parse::<u32>() {
+        Ok(speed) => speed,
+        Err(_) => return Err("Unable to parse spindle speed.".to_string()),
+    };
+
+    //  power
+    let power = match response[4].parse::<u32>() {
+        Ok(power) => power,
+        Err(_) => return Err("Unable to parse spindle power.".to_string()),
+    };
+
+    //  close serial port
+    drop(port);
+
+    //  unlock serial
+    unlock_serial();
+
     Ok(SpindleState {
-        State: MachineState::Running,
-        Direction: false,
-        TargetSpeed: 123,
-        Speed: 123,
-        Power: 70
+        State: state,
+        Direction: direction,
+        TargetSpeed: target_speed,
+        Speed: speed,
+        Power: power,
     })
 }
 
@@ -207,7 +277,10 @@ fn get_spindle_state() -> Result<SpindleState, String> {
 fn set_spindle_target(direction: bool, speed: u32) -> Result<(), String> {
     println!("set spindle target. direction: {}, speed: {}", direction, speed);
 
-    Ok(())
+    //  create message
+    let message = format!(";TARGET {} {}\n", if direction { "R" } else { "F" }, speed);
+    //  send message
+    send_message(message)
 }
 
 /**
@@ -217,7 +290,11 @@ fn set_spindle_target(direction: bool, speed: u32) -> Result<(), String> {
 #[tauri::command]
 fn start_spindle() -> Result<(), String> {
     println!("start spindle");
-    Ok(())
+
+    //  create message
+    let message = ";START\n".to_string();
+    //  send message
+    send_message(message)
 }
 
 /**
@@ -227,7 +304,11 @@ fn start_spindle() -> Result<(), String> {
 #[tauri::command]
 fn stop_spindle() -> Result<(), String> {
     println!("stop spindle");
-    Ok(())
+
+    //  create message
+    let message = ";STOP\n".to_string();
+    //  send message
+    send_message(message)
 }
 
 /**
@@ -237,7 +318,65 @@ fn stop_spindle() -> Result<(), String> {
 #[tauri::command]
 fn emergency_stop() -> Result<(), String> {
     println!("emergency stop");
+
+    //  create message
+    let message = ";EMERG\n".to_string();
+    //  send message
+    send_message(message)
+}
+
+/**
+ * Send message to serial port
+ */
+fn send_message(message: String) -> Result<(), String> {
+    wait_until_serial_unlocked();
+    //  serial communication
+    lock_serial();
+    //  open serial port
+    let mut port = match serialport::new(SERIAL_PATH.get().unwrap(), 9_600)
+        .timeout(Duration::from_millis(10))
+        .open()
+    {
+        Ok(port) => port,
+        Err(_) => return Err("Unable to open serial port.".to_string()),
+    };
+
+    match port.write(message.as_bytes()) {
+        Ok(_) => (),
+        Err(_) => return Err("Unable to write to serial port.".to_string()),
+    }
+
+    //  close serial port
+    drop(port);
+
+    //  unlock serial
+    unlock_serial();
     Ok(())
+}
+
+/**
+ *  Wait until serial is unlocked
+ */
+fn wait_until_serial_unlocked() {
+    while *IS_SERIAL_LOCKED.get().unwrap() {
+        //  wait until serial is unlocked
+        //  sleep 200ms
+        std::thread::sleep(std::time::Duration::from_millis(200));
+    }
+}
+
+/**
+ *  lock serial
+ */
+fn lock_serial() {
+    IS_SERIAL_LOCKED.set(true).unwrap();
+}
+
+/**
+ *  unlock serial
+ */
+fn unlock_serial() {
+    IS_SERIAL_LOCKED.set(false).unwrap();
 }
 
 fn main() {
