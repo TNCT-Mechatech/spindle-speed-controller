@@ -1,20 +1,17 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::api::private::OnceCell;
+mod communication;
+
 use serde::{Serialize, Deserialize};
 use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
-use std::time::Duration;
+use std::sync::{Mutex};
+use tauri::api::private::OnceCell;
 
 /// Serial communication section
-
-//  serial path
-static SERIAL_PATH: OnceCell<String> = OnceCell::new();
-
-//  serial lock
-static IS_SERIAL_LOCKED: OnceCell<bool> = OnceCell::new();
+static COMMUNICATION: OnceCell<Mutex<communication::Communication>> = OnceCell::new();
 
 /**
  *  Get available serial ports
@@ -55,7 +52,9 @@ fn get_available_ports() -> Result<Vec<String>, String> {
  */
 #[tauri::command]
 fn get_selected_port() -> Result<String, ()> {
-    match SERIAL_PATH.get() {
+    let communication = COMMUNICATION.get().unwrap().lock().unwrap();
+
+    match communication.get_serial_path() {
         Some(path) => Ok(path.to_string()),
         None => Err(()),
     }
@@ -87,8 +86,9 @@ fn set_port(path: String) -> Result<(), String> {
         return Err("Specified port is not available.".to_string());
     }
 
+    let mut communication = COMMUNICATION.get().unwrap().lock().unwrap();
     //  set serial path
-    SERIAL_PATH.set(path).unwrap();
+    communication.set_serial_path(path);
 
     Ok(())
 }
@@ -185,34 +185,30 @@ struct SpindleState {
  */
 #[tauri::command]
 fn get_spindle_state() -> Result<SpindleState, String> {
-    wait_until_serial_unlocked();
-    //  serial communication
-    lock_serial();
-    //  open serial port
-    let mut port = match serialport::new(SERIAL_PATH.get().unwrap(), 9_600)
-        .timeout(Duration::from_millis(100))    //  longer timeout for spindle state
-        .open()
-    {
-        Ok(port) => port,
-        Err(_) => return Err("Unable to open serial port.".to_string()),
-    };
+    println!("get spindle state");
+
+    let mut communication = COMMUNICATION.get().unwrap().lock().unwrap();
 
     //  send command
     let command = ";STATUS\n".to_string();
-    match port.write(command.as_bytes()) {
+
+
+    println!("send command");
+    //  send command
+    match communication.send_command_only(command) {
         Ok(_) => (),
-        Err(_) => return Err("Unable to write to serial port.".to_string()),
+        Err(message) => return Err(message),
     }
 
-    //  receive response
-    let mut buffer: Vec<u8> = vec![0; 100];
-    match port.read(&mut buffer) {
-        Ok(_) => (),
-        Err(_) => return Err("Unable to read from serial port.".to_string()),
-    }
+    println!("wait until receive message");
+    //  get response
+    let response = match communication.receive_message() {
+        Ok(response) => response,
+        Err(message) => return Err(message),
+    };
 
-    //  parse into spindle state
-    let response = String::from_utf8(buffer).unwrap();
+    println!("received message");
+
     //  remove `;` and `\n`
     let response = response.trim_start_matches(';');
     let response = response.trim_end_matches('\n');
@@ -254,12 +250,6 @@ fn get_spindle_state() -> Result<SpindleState, String> {
         Err(_) => return Err("Unable to parse spindle power.".to_string()),
     };
 
-    //  close serial port
-    drop(port);
-
-    //  unlock serial
-    unlock_serial();
-
     Ok(SpindleState {
         State: state,
         Direction: direction,
@@ -277,10 +267,15 @@ fn get_spindle_state() -> Result<SpindleState, String> {
 fn set_spindle_target(direction: bool, speed: u32) -> Result<(), String> {
     println!("set spindle target. direction: {}, speed: {}", direction, speed);
 
+    let mut communication = COMMUNICATION.get().unwrap().lock().unwrap();
+
     //  create message
     let message = format!(";TARGET {} {}\n", if direction { "R" } else { "F" }, speed);
-    //  send message
-    send_message(message)
+    //  send command
+    match communication.send_command_only(message) {
+        Ok(_) => Ok(()),
+        Err(message) => Err(message),
+    }
 }
 
 /**
@@ -291,10 +286,16 @@ fn set_spindle_target(direction: bool, speed: u32) -> Result<(), String> {
 fn start_spindle() -> Result<(), String> {
     println!("start spindle");
 
+    let mut communication = COMMUNICATION.get().unwrap().lock().unwrap();
+
     //  create message
     let message = ";START\n".to_string();
+
     //  send message
-    send_message(message)
+    match communication.send_command_only(message) {
+        Ok(_) => Ok(()),
+        Err(message) => Err(message),
+    }
 }
 
 /**
@@ -305,10 +306,15 @@ fn start_spindle() -> Result<(), String> {
 fn stop_spindle() -> Result<(), String> {
     println!("stop spindle");
 
+    let mut communication = COMMUNICATION.get().unwrap().lock().unwrap();
+
     //  create message
     let message = ";STOP\n".to_string();
     //  send message
-    send_message(message)
+    match communication.send_command_only(message) {
+        Ok(_) => Ok(()),
+        Err(message) => Err(message),
+    }
 }
 
 /**
@@ -319,67 +325,22 @@ fn stop_spindle() -> Result<(), String> {
 fn emergency_stop() -> Result<(), String> {
     println!("emergency stop");
 
+    let mut communication = COMMUNICATION.get().unwrap().lock().unwrap();
+
     //  create message
     let message = ";EMERG\n".to_string();
     //  send message
-    send_message(message)
-}
-
-/**
- * Send message to serial port
- */
-fn send_message(message: String) -> Result<(), String> {
-    wait_until_serial_unlocked();
-    //  serial communication
-    lock_serial();
-    //  open serial port
-    let mut port = match serialport::new(SERIAL_PATH.get().unwrap(), 9_600)
-        .timeout(Duration::from_millis(10))
-        .open()
-    {
-        Ok(port) => port,
-        Err(_) => return Err("Unable to open serial port.".to_string()),
-    };
-
-    match port.write(message.as_bytes()) {
-        Ok(_) => (),
-        Err(_) => return Err("Unable to write to serial port.".to_string()),
-    }
-
-    //  close serial port
-    drop(port);
-
-    //  unlock serial
-    unlock_serial();
-    Ok(())
-}
-
-/**
- *  Wait until serial is unlocked
- */
-fn wait_until_serial_unlocked() {
-    while *IS_SERIAL_LOCKED.get().unwrap() {
-        //  wait until serial is unlocked
-        //  sleep 200ms
-        std::thread::sleep(std::time::Duration::from_millis(200));
+    match communication.send_command_only(message) {
+        Ok(_) => Ok(()),
+        Err(message) => Err(message),
     }
 }
 
-/**
- *  lock serial
- */
-fn lock_serial() {
-    IS_SERIAL_LOCKED.set(true).unwrap();
-}
 
-/**
- *  unlock serial
- */
-fn unlock_serial() {
-    IS_SERIAL_LOCKED.set(false).unwrap();
-}
 
 fn main() {
+    COMMUNICATION.set(Mutex::new(communication::Communication::new())).expect("Failed to initialize serial communication.");
+
     tauri::Builder::default()
         .setup(|app| {
             let config_dir = app.path_resolver().app_config_dir().unwrap();
