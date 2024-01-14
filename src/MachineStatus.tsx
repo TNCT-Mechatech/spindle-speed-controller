@@ -18,8 +18,15 @@ export default function MachineStatus() {
     })
 
     useInterval(async () => {
-        const state = await getSpindleState()
-        setSpindleState(state)
+        getSpindleState()
+            .then(state => setSpindleState(state))
+            .catch(() => setSpindleState({
+                State: "Offline",
+                Direction: false,
+                TargetSpeed: 0,
+                Speed: 0,
+                Power: 0,
+            }))
     }, 2000)
 
     return (
