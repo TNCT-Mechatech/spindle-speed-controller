@@ -1,5 +1,6 @@
 import {ChangeEvent, FormEvent, useState} from "react";
 import {
+    Alert,
     Box, Button, Container,
     FormControl,
     FormControlLabel,
@@ -14,6 +15,7 @@ import {invoke} from "@tauri-apps/api/tauri";
 export default function TargetSetting() {
     const [target, setTarget] = useState<String>("")
     const [direction, setDirection] = useState<String>("forward")
+    const [openError, setOpenError] = useState<boolean>(false)
 
     const onTargetChangeHandle = async (e: ChangeEvent<HTMLInputElement>) => {
         const result = Math.abs(Number(e.target.value)).toString();
@@ -25,8 +27,18 @@ export default function TargetSetting() {
         }
     }
 
-    const onSubmitHandle = (event: FormEvent<HTMLFormElement>) => {
+    const onSubmitHandle = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
+
+        //  check if target speed is under max speed
+        const maxSpeed = await getMaxSpeed()
+        if (Number(target) > maxSpeed) {
+            setOpenError(true)
+            return
+        }
+
+        //  reset error
+        setOpenError(false)
 
         invoke("set_spindle_target", {direction: direction != "forward", speed: Number(target)})
             .then((res) => {
@@ -49,6 +61,7 @@ export default function TargetSetting() {
                         <FormControlLabel value="reverse" control={<Radio/>} label="Reverse"/>
                     </RadioGroup>
                 </FormControl>
+                {openError && <Alert severity="error">Target speed must be under max speed.</Alert>}
                 <Box>
                     <InputLabel>Target Speed [RPM]</InputLabel>
                     <TextField
@@ -73,4 +86,8 @@ export default function TargetSetting() {
             </Stack>
         </Container>
     )
+}
+
+const getMaxSpeed = async (): Promise<number> => {
+    return await invoke("get_max_spindle_speed");
 }
