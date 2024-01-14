@@ -171,6 +171,7 @@ enum MachineState {
     Running,
     EmergencyStop,
     Error,
+    Offline
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
