@@ -1,6 +1,7 @@
 import {Box, Divider, Grid, Stack} from "@mui/material";
 import TargetSetting from "./TargetSetting.tsx";
 import Operation from "./Operation.tsx";
+import MachineStatus from "./MachineStatus.tsx";
 import SerialPortSelector from "./SerialPortSelector.tsx";
 
 export default function Dashboard() {
@@ -10,6 +11,7 @@ export default function Dashboard() {
                 <Grid item width={"50%"}>
                     <Stack spacing={1}>
                         <SerialPortSelector/>
+                        <MachineStatus/>
                     </Stack>
                 </Grid>
                 <Grid item width={"50%"}>
