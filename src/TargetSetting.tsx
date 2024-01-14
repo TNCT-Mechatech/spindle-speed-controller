@@ -1,6 +1,5 @@
 import {ChangeEvent, FormEvent, useState} from "react";
 import {
-    Alert,
     Box, Button, Container,
     FormControl,
     FormControlLabel,
@@ -15,7 +14,7 @@ import {invoke} from "@tauri-apps/api/tauri";
 export default function TargetSetting() {
     const [target, setTarget] = useState<String>("")
     const [direction, setDirection] = useState<String>("forward")
-    const [openError, setOpenError] = useState<boolean>(false)
+    const [isError, setIsError] = useState<boolean>(false)
 
     const onTargetChangeHandle = async (e: ChangeEvent<HTMLInputElement>) => {
         const result = Math.abs(Number(e.target.value)).toString();
@@ -33,12 +32,12 @@ export default function TargetSetting() {
         //  check if target speed is under max speed
         const maxSpeed = await getMaxSpeed()
         if (Number(target) > maxSpeed) {
-            setOpenError(true)
+            setIsError(true)
             return
         }
 
         //  reset error
-        setOpenError(false)
+        setIsError(false)
 
         invoke("set_spindle_target", {direction: direction != "forward", speed: Number(target)})
             .then((res) => {
@@ -48,7 +47,7 @@ export default function TargetSetting() {
 
     return (
         <Container>
-            <Stack component={"form"} onSubmit={onSubmitHandle} spacing={2}>
+            <Stack component={"form"} onSubmit={onSubmitHandle} spacing={1}>
                 <FormControl>
                     <FormLabel id="controlled-direction-radio">Direction</FormLabel>
                     <RadioGroup
@@ -61,10 +60,11 @@ export default function TargetSetting() {
                         <FormControlLabel value="reverse" control={<Radio/>} label="Reverse"/>
                     </RadioGroup>
                 </FormControl>
-                {openError && <Alert severity="error">Target speed must be under max speed.</Alert>}
                 <Box>
                     <InputLabel>Target Speed [RPM]</InputLabel>
                     <TextField
+                        error={isError}
+                        helperText="Target speed must be under max speed"
                         required={true}
                         value={target}
                         onChange={onTargetChangeHandle}
