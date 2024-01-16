@@ -68,7 +68,7 @@ impl Communication {
         }
 
         match serialport::new(self.serial_path.clone().unwrap(), 9_600)
-            .timeout(std::time::Duration::from_millis(10))
+            .timeout(std::time::Duration::from_millis(100))
             .open()
         {
             Ok(port) => {
@@ -148,21 +148,18 @@ impl Communication {
         let mut buffer: Vec<u8> = vec![0; 100];
 
         //  retry until success or 3 times
-        for _ in 0..3 {
-            match self.serial.as_mut().unwrap().read(&mut buffer) {
-                Ok(_) => {
-                    //  unlock serial
-                    self.unlock();
-
-                    return Ok(String::from_utf8(buffer).unwrap());
-                }
-                Err(_) => {}
+        let result = match self.serial.as_mut().unwrap().read(&mut buffer) {
+            Ok(_) => {
+                Ok(String::from_utf8(buffer).unwrap())
             }
-        }
+            Err(_) => {
+                Err("Unable to read from serial port.".to_string())
+            }
+        };
 
         //  unlock serial
         self.unlock();
 
-        Err("Unable to read from serial port.".to_string())
+        result
     }
 }

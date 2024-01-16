@@ -189,17 +189,6 @@ fn get_spindle_state() -> Result<SpindleState, String> {
 
     let mut communication = COMMUNICATION.get().unwrap().lock().unwrap();
 
-    //  send command
-    let command = ";STATUS\n".to_string();
-
-
-    println!("send command");
-    //  send command
-    match communication.send_command_only(command) {
-        Ok(_) => (),
-        Err(message) => return Err(message),
-    }
-
     println!("wait until receive message");
     //  get response
     let response = match communication.receive_message() {
@@ -207,15 +196,25 @@ fn get_spindle_state() -> Result<SpindleState, String> {
         Err(message) => return Err(message),
     };
 
-    println!("received message");
+    println!("received message. response: {}", response);
 
-    //  remove `;` and `\n`
-    let response = response.trim_start_matches(';');
-    let response = response.trim_end_matches('\n');
+    let start_index = response.find(';');
+    if start_index.is_none() {
+        return Err("Invalid message".to_string());
+    }
+    let end_index = response[start_index.unwrap()..].find('\n');
+    if end_index.is_none() {
+        return Err("Invalid message".to_string());
+    }
+    let response = &response[start_index.unwrap() + 1..start_index.unwrap() + end_index.unwrap()];
+    //  remove '\n' '\r'
+    let response = response.replace("\n", "").replace("\r", "");
+
     //  split response by space into vector
     let response = response.split(" ");
     let response: Vec<&str> = response.collect();
 
+    println!("response: {:?}", response);
     //  state
     let state = match response[0] {
         "STOP" => MachineState::Stopped,
@@ -224,7 +223,6 @@ fn get_spindle_state() -> Result<SpindleState, String> {
         "ERROR" => MachineState::Error,
         _ => return Err("Unable to parse spindle state.".to_string()),
     };
-
     //  direction
     let direction = match response[1] {
         "F" => false,
@@ -232,24 +230,28 @@ fn get_spindle_state() -> Result<SpindleState, String> {
         _ => return Err("Unable to parse spindle direction.".to_string()),
     };
 
+    println!("TargetSpeed");
     //  target speed
     let target_speed = match response[2].parse::<u32>() {
         Ok(speed) => speed,
         Err(_) => return Err("Unable to parse spindle target speed.".to_string()),
     };
 
+    println!("Speed");
     //  speed
     let speed = match response[3].parse::<u32>() {
         Ok(speed) => speed,
         Err(_) => return Err("Unable to parse spindle speed.".to_string()),
     };
 
+    println!("Power");
     //  power
     let power = match response[4].parse::<u32>() {
         Ok(power) => power,
         Err(_) => return Err("Unable to parse spindle power.".to_string()),
     };
 
+    println!("return");
     Ok(SpindleState {
         State: state,
         Direction: direction,
