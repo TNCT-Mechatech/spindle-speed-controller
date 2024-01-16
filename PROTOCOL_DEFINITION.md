@@ -19,15 +19,9 @@
 
 送信の際は、200ms以上の遅延を設けてください。
 
-## コマンド
+### ステータス
 
-マイコンへの通信のみコマンドを使用できます。
-
-### ステータス取得
-
-`STATUS`
-
-#### レスポンス
+1sに1回、ステータスを送信します。
 
 `<STATE> <DIRECTON> <TARGET_SPEED> <SPEED> <POWER>`
 
@@ -36,6 +30,10 @@
 - TARGET_SPEED: unsigned number
 - SPEED: unsigned number
 - POWER: unsigned number
+
+## コマンド
+
+マイコンへの通信のみコマンドを使用できます。
 
 ### 主軸目標設定
 
