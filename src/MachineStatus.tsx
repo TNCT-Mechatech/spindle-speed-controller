@@ -27,7 +27,7 @@ export default function MachineStatus() {
                 Speed: 0,
                 Power: 0,
             }))
-    }, 2000)
+    }, 500)
 
     return (
         <Stack>
