@@ -174,9 +174,9 @@ enum MachineState {
 struct SpindleState {
     State: MachineState,
     Direction: bool,
-    TargetSpeed: u32,
-    Speed: u32,
-    Power: u32,
+    TargetSpeed: i32,
+    Speed: i32,
+    Power: i32,
 }
 
 /**
@@ -232,21 +232,21 @@ fn get_spindle_state() -> Result<SpindleState, String> {
 
     println!("TargetSpeed");
     //  target speed
-    let target_speed = match response[2].parse::<u32>() {
+    let target_speed = match response[2].parse::<i32>() {
         Ok(speed) => speed,
         Err(_) => return Err("Unable to parse spindle target speed.".to_string()),
     };
 
     println!("Speed");
     //  speed
-    let speed = match response[3].parse::<u32>() {
+    let speed = match response[3].parse::<i32>() {
         Ok(speed) => speed,
         Err(_) => return Err("Unable to parse spindle speed.".to_string()),
     };
 
     println!("Power");
     //  power
-    let power = match response[4].parse::<u32>() {
+    let power = match response[4].parse::<i32>() {
         Ok(power) => power,
         Err(_) => return Err("Unable to parse spindle power.".to_string()),
     };
