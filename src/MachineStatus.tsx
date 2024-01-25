@@ -47,7 +47,7 @@ export default function MachineStatus() {
                         </Box>
                         <Box>
                             <Typography variant={"h6"}>
-                                目標回転速度:
+                                目標回転数:
                             </Typography>
                             <Typography
                                 variant={"body1"}
@@ -63,7 +63,7 @@ export default function MachineStatus() {
                         >
                             <Grid item xs={5}>
                                 <Typography variant={"h6"}>
-                                    現在回転速度:
+                                    現在回転数:
                                 </Typography>
                                 <Typography
                                     variant={"body1"}

@@ -61,7 +61,7 @@ export default function TargetSetting() {
                     </RadioGroup>
                 </FormControl>
                 <Box>
-                    <InputLabel>目標速度 [RPM]</InputLabel>
+                    <InputLabel>目標回転数 [RPM]</InputLabel>
                     <TextField
                         error={isError}
                         helperText="目標回転速度は最大回転数よりも大きくできません"
