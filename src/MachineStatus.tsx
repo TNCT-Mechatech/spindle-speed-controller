@@ -36,24 +36,24 @@ export default function MachineStatus() {
                     <Stack spacing={1}>
                         <Box>
                             <Typography variant={"h6"}>
-                                Status:
+                                状態:
                             </Typography>
                             <Typography
                                 variant={"body1"}
                                 color={getStateColor(spindleState.State)}
                             >
-                                {spindleState.State}
+                                {getStateMessage(spindleState.State)}
                             </Typography>
                         </Box>
                         <Box>
                             <Typography variant={"h6"}>
-                                Target Speed:
+                                目標回転速度:
                             </Typography>
                             <Typography
                                 variant={"body1"}
                                 color={"gray"}
                             >
-                                {spindleState.Direction ? "Reverse" : "Forward"} {spindleState.TargetSpeed} [RPM]
+                                {spindleState.Direction ? "逆回転" : "正回転"} {spindleState.TargetSpeed} [RPM]
                             </Typography>
                         </Box>
                         <Grid
@@ -63,7 +63,7 @@ export default function MachineStatus() {
                         >
                             <Grid item xs={5}>
                                 <Typography variant={"h6"}>
-                                    Current Speed:
+                                    現在回転速度:
                                 </Typography>
                                 <Typography
                                     variant={"body1"}
@@ -75,7 +75,7 @@ export default function MachineStatus() {
 
                             <Grid item xs={5}>
                                 <Typography variant={"h6"}>
-                                    Current Power:
+                                    出力:
                                 </Typography>
                                 <Typography
                                     variant={"body1"}
@@ -116,5 +116,20 @@ const getStateColor = (state: SpindleState["State"]) => {
             return "orange"
         case "Offline":
             return "grey"
+    }
+}
+
+const getStateMessage = (state: SpindleState["State"]) => {
+    switch (state) {
+        case "Stopped":
+            return "停止"
+        case "Running":
+            return "運転"
+        case "EmergencyStop":
+            return "非常停止"
+        case "Error":
+            return "エラー"
+        case "Offline":
+            return "オフライン"
     }
 }

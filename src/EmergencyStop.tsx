@@ -19,7 +19,7 @@ export default function EmergencyStop() {
                 margin: "10px",
             }}>
             <Typography variant={"h6"}>
-                Emergency Stop
+                ↓ 緊急停止 ↓
             </Typography>
             <div
                 style={{

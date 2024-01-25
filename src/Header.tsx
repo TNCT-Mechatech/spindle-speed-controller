@@ -18,7 +18,7 @@ export default function Header(props: HeaderProps) {
                         props.setPage(Page.Dashboard)
                     }}
                 >
-                    Dashboard
+                    ダッシュボード
                 </Button>
                 <Button
                     size="large"
@@ -29,7 +29,7 @@ export default function Header(props: HeaderProps) {
                         props.setPage(Page.Settings)
                     }}
                 >
-                    Settings
+                    設定
                 </Button>
             </Toolbar>
         </AppBar>

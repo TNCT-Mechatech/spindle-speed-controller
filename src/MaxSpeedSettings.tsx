@@ -33,7 +33,7 @@ export default function MaxSpeedSettings() {
 
     return (
         <Container>
-            <Typography variant={"h6"}>Max Speed [RPM]</Typography>
+            <Typography variant={"h6"}>最大回転速度 [RPM]</Typography>
             <TextField
                 required={true}
                 value={maxSpeed}

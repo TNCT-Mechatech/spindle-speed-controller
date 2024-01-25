@@ -32,7 +32,7 @@ export default function Operation() {
                             onClick={onStartHandle}
                             fullWidth
                         >
-                            Start
+                            開始
                         </Button>
                     </Grid>
                     <Grid item xs={5.5}>
@@ -42,7 +42,7 @@ export default function Operation() {
                             onClick={onStopHandle}
                             fullWidth
                         >
-                            Stop
+                            停止
                         </Button>
                     </Grid>
                 </Grid>

@@ -49,22 +49,22 @@ export default function TargetSetting() {
         <Container>
             <Stack component={"form"} onSubmit={onSubmitHandle} spacing={1}>
                 <FormControl>
-                    <FormLabel id="controlled-direction-radio">Direction</FormLabel>
+                    <FormLabel id="controlled-direction-radio">回転方向</FormLabel>
                     <RadioGroup
                         aria-labelledby="controlled-direction-radio"
                         name="controlled-direction-radio"
                         value={direction}
                         onChange={(event) => setDirection(event.target.value)}
                     >
-                        <FormControlLabel value="forward" control={<Radio/>} label="Forward"/>
-                        <FormControlLabel value="reverse" control={<Radio/>} label="Reverse"/>
+                        <FormControlLabel value="forward" control={<Radio/>} label="正回転"/>
+                        <FormControlLabel value="reverse" control={<Radio/>} label="逆回転"/>
                     </RadioGroup>
                 </FormControl>
                 <Box>
-                    <InputLabel>Target Speed [RPM]</InputLabel>
+                    <InputLabel>目標速度 [RPM]</InputLabel>
                     <TextField
                         error={isError}
-                        helperText="Target speed must be under max speed"
+                        helperText="目標回転速度は最大回転数よりも大きくできません"
                         required={true}
                         value={target}
                         onChange={onTargetChangeHandle}
@@ -81,7 +81,7 @@ export default function TargetSetting() {
                         maxWidth: "100px"
                     }}
                 >
-                    Send
+                    送信
                 </Button>
             </Stack>
         </Container>
