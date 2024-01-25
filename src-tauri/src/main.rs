@@ -321,7 +321,6 @@ fn emergency_stop() -> Result<(), String> {
 }
 
 
-
 fn main() {
     COMMUNICATION.set(Mutex::new(communication::Communication::new())).expect("Failed to initialize serial communication.");
 

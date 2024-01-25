@@ -41,7 +41,7 @@ export default function App() {
                         overflow: 'auto',
                     }}
                 >
-                    <Toolbar />
+                    <Toolbar/>
                     {pageState === Page.Dashboard && <Dashboard/>}
                     {pageState === Page.Settings && <Settings/>}
                 </Box>
