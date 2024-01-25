@@ -185,18 +185,13 @@ struct SpindleState {
  */
 #[tauri::command]
 fn get_spindle_state() -> Result<SpindleState, String> {
-    println!("get spindle state");
-
     let mut communication = COMMUNICATION.get().unwrap().lock().unwrap();
 
-    println!("wait until receive message");
     //  get response
     let response = match communication.receive_message() {
         Ok(response) => response,
         Err(message) => return Err(message),
     };
-
-    println!("received message. response: {}", response);
 
     let start_index = response.find(';');
     if start_index.is_none() {
@@ -214,7 +209,6 @@ fn get_spindle_state() -> Result<SpindleState, String> {
     let response = response.split(" ");
     let response: Vec<&str> = response.collect();
 
-    println!("response: {:?}", response);
     //  state
     let state = match response[0] {
         "STOP" => MachineState::Stopped,
@@ -230,28 +224,24 @@ fn get_spindle_state() -> Result<SpindleState, String> {
         _ => return Err("Unable to parse spindle direction.".to_string()),
     };
 
-    println!("TargetSpeed");
     //  target speed
     let target_speed = match response[2].parse::<i32>() {
         Ok(speed) => speed,
         Err(_) => return Err("Unable to parse spindle target speed.".to_string()),
     };
 
-    println!("Speed");
     //  speed
     let speed = match response[3].parse::<i32>() {
         Ok(speed) => speed,
         Err(_) => return Err("Unable to parse spindle speed.".to_string()),
     };
 
-    println!("Power");
     //  power
     let power = match response[4].parse::<i32>() {
         Ok(power) => power,
         Err(_) => return Err("Unable to parse spindle power.".to_string()),
     };
 
-    println!("return");
     Ok(SpindleState {
         State: state,
         Direction: direction,
@@ -267,8 +257,6 @@ fn get_spindle_state() -> Result<SpindleState, String> {
  */
 #[tauri::command]
 fn set_spindle_target(direction: bool, speed: u32) -> Result<(), String> {
-    println!("set spindle target. direction: {}, speed: {}", direction, speed);
-
     let mut communication = COMMUNICATION.get().unwrap().lock().unwrap();
 
     //  create message
@@ -286,8 +274,6 @@ fn set_spindle_target(direction: bool, speed: u32) -> Result<(), String> {
  */
 #[tauri::command]
 fn start_spindle() -> Result<(), String> {
-    println!("start spindle");
-
     let mut communication = COMMUNICATION.get().unwrap().lock().unwrap();
 
     //  create message
@@ -306,8 +292,6 @@ fn start_spindle() -> Result<(), String> {
  */
 #[tauri::command]
 fn stop_spindle() -> Result<(), String> {
-    println!("stop spindle");
-
     let mut communication = COMMUNICATION.get().unwrap().lock().unwrap();
 
     //  create message
@@ -325,8 +309,6 @@ fn stop_spindle() -> Result<(), String> {
  */
 #[tauri::command]
 fn emergency_stop() -> Result<(), String> {
-    println!("emergency stop");
-
     let mut communication = COMMUNICATION.get().unwrap().lock().unwrap();
 
     //  create message
