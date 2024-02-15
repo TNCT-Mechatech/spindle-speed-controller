@@ -25,7 +25,8 @@
       "targets": "all",
       "identifier": "dev.t7e.spindle-speed-controller",
       "icon": [
-        "icons/icon.png"
+        "icons/icon.png",
+        "icons/icon.ico"
       ]
     },
     "security": {
